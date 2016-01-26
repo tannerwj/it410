@@ -2,28 +2,20 @@
 //IT410
 
 const fs 		= require('fs')
-const util 		= require('util')
 const Promise 	= require('bluebird')
 
 //getPathType ( path : String )
 //Determine if the path points to a file, a directory, nothing, or other. This is done using fs.stat
 var getPathType = function (path){
 	return new Promise(function (resolve, reject){
-		if(typeof path !== 'string'){
-			reject('not string')
-		}else{
-			fs.stat(path, function (err, stats){
-				if(err || !stats){
-					resolve('nothing')
-				}else if(stats.isFile()){
-					resolve('file')
-				}else if(stats.isDirectory()){
-					resolve('directory')
-				}else{
-					resolve('other')
-				}
-			})
-		}
+		if(typeof path !== 'string'){ return reject('not string') }
+
+		fs.stat(path, function (err, stats){
+			if(err || !stats){ return resolve('nothing') }
+			if(stats.isFile()){ return resolve('file') }
+			if(stats.isDirectory()){ return resolve('directory') }
+			return resolve('other')
+		})
 	})
 }
 
@@ -34,49 +26,42 @@ var getDirectoryTypes = function  (path, depth, filter){
 	var filter = filter || function () { return true }
 
 	return new Promise(function (resolve, reject){
-		if(typeof path !== 'string'){
-			reject('not string')
-		}else if(typeof depth !== 'number'){
-			reject('not number')
-		}else if(typeof filter !== 'function'){
-			reject('not function')
-		}else{
-			getPathType(path).then(function (val){
-				if(val === 'directory'){
-					fs.readdir(path, function (err, files){
-						if(err){ 
-							reject(err)
-						}else{
-							var tmp = {}
+		if(typeof path !== 'string'){ return reject('not string') }
+		if(typeof depth !== 'number'){ return reject('not number') }
+		if(typeof filter !== 'function'){ return reject('not function') }
 
-							Promise.map(files, function (file){
-								return getPathType(path + '/' + file).then(function (type){
-									if(type === 'directory' && depth !== 0){
-										if(depth === -1){
-											return getDirectoryTypes(path + '/' + file, depth, filter).then(function (obj){
-												tmp[path + '/' + file] = obj
-											})
-										}else{
-											return getDirectoryTypes(path + '/' + file, depth - 1, filter).then(function (obj){
-												tmp[path + '/' + file] = obj
-											})
-										}
-									}else if(filter(path + '/' + file, type)){
-										tmp[path + '/' + file] = type
-									}
-								})
-							}).then(function (){
-								resolve(tmp)
-							})
-						}
+		return getPathType(path).then(function (val){
+			if(val === 'directory'){
+				fs.readdir(path, function (err, files){
+					if(err){ return reject(err) }
+					var tmp = {}
+
+					return Promise.map(files, function (file){
+						return getPathType(path + '/' + file).then(function (type){
+							if(type === 'directory' && depth){
+								if(depth === -1){
+									return getDirectoryTypes(path + '/' + file, depth, filter).then(function (obj){
+										tmp[path + '/' + file] = obj
+									})
+								}else{
+									return getDirectoryTypes(path + '/' + file, depth - 1, filter).then(function (obj){
+										tmp[path + '/' + file] = obj
+									})
+								}
+							}else if(filter(path + '/' + file, type)){
+								tmp[path + '/' + file] = type
+							}
+						})
+					}).then(function (){
+						return resolve(tmp)
 					})
-				}else{
-					reject('not a directory')
-				}
-			}).catch(function (err){
-				reject('not a directory')
-			})			
-		}	
+				})
+			}else{
+				return reject('not a directory')
+			}
+		}).catch(function (err){
+			return reject('not string')
+		})
 	})
 }
 
@@ -84,19 +69,14 @@ var getDirectoryTypes = function  (path, depth, filter){
 //Check to see if something exists at the specified path by using getPathType
 var exists = function  (path){
 	return new Promise(function (resolve, reject){
-		if(typeof path !== 'string'){ 
-			reject('not string')
-		}else{
-			getPathType(path).then(function (type){
-				if(type === 'nothing'){
-					resolve(false)
-				}else{
-					resolve(true)
-				}
-			}).catch(function (err) {
-				resolve(false)
-			})
-		}
+		if(typeof path !== 'string'){ return reject('not string') }
+
+		return getPathType(path).then(function (type){
+			if(type === 'nothing'){ return resolve(false) }
+			return resolve(true)
+		}).catch(function (err) {
+			return resolve(false)
+		})
 	})
 }
 
@@ -106,10 +86,12 @@ var getFilePaths = function  (path, depth){
 	if(!(depth || depth === 0)){ depth = -1 }
 
 	return new Promise(function (resolve, reject){
-		getDirectoryTypes(path, depth, function (path, type){
+		return getDirectoryTypes(path, depth, function (path, type){
 			return type === 'file'
 		}).then(function (obj){
-			resolve(objToArray(obj, []))
+			return resolve(objToArray(obj, []))
+		}).catch(function (err){
+			return reject(err)
 		})
 	})
 }
@@ -131,25 +113,19 @@ function objToArray (obj, arr){
 //Get the contents of a file
 var readFile = function  (path){
 	return new Promise(function (resolve, reject){
-		if(typeof path !== 'string'){ 
-			reject('not string')
-		}else{
-			getPathType(path).then(function (type){
-				if(type !== 'file'){
-					reject('not file')
-				}else{
-					fs.readFile(path, 'utf8', function (err, data){
-						if(err){
-							reject(err)
-						}else{
-							resolve(data)
-						}
-					})
-				}
-			}).catch(function (err) {
-				reject(err)
+		if(typeof path !== 'string'){ return reject('not string') }
+
+		return getPathType(path).then(function (type){
+			if(type !== 'file'){ return reject('not file') }
+
+			fs.readFile(path, 'utf8', function (err, data){
+				if(err){ return reject(err) }
+				return resolve(data)
 			})
-		}
+
+		}).catch(function (err) {
+			return reject(err)
+		})
 	})
 }
 
@@ -162,10 +138,10 @@ var readFiles = function  (paths){
 			return readFile(path).then(function (data){
 				tmp[path] = data
 			}).catch(function (err){
-				reject(err)
+				return reject(err)
 			})
 		}).then(function (){
-			resolve(tmp)
+			return resolve(tmp)
 		})
 	})
 }
