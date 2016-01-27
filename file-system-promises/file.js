@@ -85,14 +85,10 @@ var exists = function  (path){
 var getFilePaths = function  (path, depth){
 	if(!(depth || depth === 0)){ depth = -1 }
 
-	return new Promise(function (resolve, reject){
-		return getDirectoryTypes(path, depth, function (path, type){
-			return type === 'file'
-		}).then(function (obj){
-			return resolve(objToArray(obj, []))
-		}).catch(function (err){
-			return reject(err)
-		})
+	return getDirectoryTypes(path, depth, function (path, type){
+		return type === 'file'
+	}).then(function (obj){
+		return objToArray(obj, [])
 	})
 }
 
