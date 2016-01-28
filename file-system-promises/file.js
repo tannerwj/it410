@@ -21,12 +21,11 @@ var getPathType = function (path){
 
 //getDirectoryTypes ( path : String [, depth : Number = -1 ] [, filter : Function = function(path, type) { return true; } )
 //Read a directory and get the path types, using fs.readdir and getPathType, for each file path in the directory
-var getDirectoryTypes = function  (path, depth, filter){
+var getDirectoryTypes = function (path, depth, filter){
 	if(!(depth || depth === 0)){ depth = -1 }
 	var filter = filter || function () { return true }
 
 	return new Promise(function (resolve, reject){
-		if(typeof path !== 'string'){ return reject('not string') }
 		if(typeof depth !== 'number'){ return reject('not number') }
 		if(typeof filter !== 'function'){ return reject('not function') }
 
@@ -38,18 +37,13 @@ var getDirectoryTypes = function  (path, depth, filter){
 
 					return Promise.map(files, function (file){
 						return getPathType(path + '/' + file).then(function (type){
-							if(type === 'directory' && depth){
-								if(depth === -1){
-									return getDirectoryTypes(path + '/' + file, depth, filter).then(function (obj){
-										tmp[path + '/' + file] = obj
-									})
-								}else{
-									return getDirectoryTypes(path + '/' + file, depth - 1, filter).then(function (obj){
-										tmp[path + '/' + file] = obj
-									})
-								}
-							}else if(filter(path + '/' + file, type)){
+							if(filter(path + '/' + file, type)){
 								tmp[path + '/' + file] = type
+							}
+							if(type === 'directory' && depth){
+								return getDirectoryTypes(path + '/' + file, (depth === -1 ? depth : depth -1), filter).then(function (obj){
+									for(var i in obj) { tmp[i] = obj[i] }
+								})
 							}
 						})
 					}).then(function (){
@@ -60,69 +54,47 @@ var getDirectoryTypes = function  (path, depth, filter){
 				return reject('not a directory')
 			}
 		}).catch(function (err){
-			return reject('not string')
+			return reject(err)
 		})
 	})
 }
 
 //exists ( path : String )
 //Check to see if something exists at the specified path by using getPathType
-var exists = function  (path){
+var exists = function (path){
 	return new Promise(function (resolve, reject){
-		if(typeof path !== 'string'){ return reject('not string') }
-
 		return getPathType(path).then(function (type){
-			if(type === 'nothing'){ return resolve(false) }
-			return resolve(true)
+			return type === 'nothing' ? resolve(false) : resolve(true)
 		}).catch(function (err) {
-			return resolve(false)
+			return reject(err)
 		})
 	})
 }
 
 //getFilePaths ( path: String [, depth : Number = -1 ] )
 //Read a directory (and possibly sub-directories) to get an array of all paths to files, using getDirectoryTypes
-var getFilePaths = function  (path, depth){
-	if(!(depth || depth === 0)){ depth = -1 }
-
+var getFilePaths = function (path, depth){
 	return new Promise(function (resolve, reject){
 		return getDirectoryTypes(path, depth, function (path, type){
 			return type === 'file'
 		}).then(function (obj){
-			return resolve(objToArray(obj, []))
+			return resolve(Object.keys(obj))
 		}).catch(function (err){
 			return reject(err)
 		})
 	})
 }
 
-function objToArray (obj, arr){
-	for (var key in obj) {
-		if (obj.hasOwnProperty(key)) {
-			if(typeof obj[key] === 'object'){
-				arr.concat(objToArray(obj[key], arr))
-			}else if(obj[key] === 'file'){
-				arr.push(key)
-			}
-		}
-	}
-	return arr
-}
-
 //readFile ( path: String )
 //Get the contents of a file
-var readFile = function  (path){
+var readFile = function (path){
 	return new Promise(function (resolve, reject){
-		if(typeof path !== 'string'){ return reject('not string') }
-
 		return getPathType(path).then(function (type){
 			if(type !== 'file'){ return reject('not file') }
 
 			fs.readFile(path, 'utf8', function (err, data){
-				if(err){ return reject(err) }
-				return resolve(data)
+				return err ? reject(err) : resolve(data)
 			})
-
 		}).catch(function (err) {
 			return reject(err)
 		})
@@ -131,31 +103,26 @@ var readFile = function  (path){
 
 //readFiles ( paths: String[] )
 //Get the contents of multiple files using readFile
-var readFiles = function  (paths){
+var readFiles = function (paths){
 	return new Promise(function (resolve, reject){
-		var tmp = {}
-		return Promise.map(paths, function (path){
+		return Promise.reduce(paths, function (obj, path){
 			return readFile(path).then(function (data){
-				tmp[path] = data
-			}).catch(function (err){
-				return reject(err)
+				obj[path] = data
+				return obj
 			})
-		}).then(function (){
-			return resolve(tmp)
+		}, {}).then(function (obj){
+			return resolve(obj)
+		}).catch(function (err){
+			return reject(err)
 		})
 	})
 }
 
 module.exports = {
 	getPathType : getPathType,
-
 	getDirectoryTypes : getDirectoryTypes,
-
 	exists : exists,
-
 	getFilePaths : getFilePaths,
-
 	readFile : readFile,
-
 	readFiles : readFiles
 }
