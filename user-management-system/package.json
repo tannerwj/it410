@@ -1,0 +1,22 @@
+{
+  "name": "user-management-system",
+  "version": "1.0.0",
+  "description": "Implement a system where users can login, logout, and update basic profile information.",
+  "main": "index.js",
+  "scripts": {
+    "test": "tests/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tannerwj/it410/tree/master/user-management-system"
+  },
+  "author": "Tanner Johnson",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^0.8.5",
+    "bluebird": "^3.2.2",
+    "body-parser": "^1.14.2",
+    "express": "^4.13.4",
+    "mongodb": "^2.1.6"
+  }
+}
