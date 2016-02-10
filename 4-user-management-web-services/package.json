@@ -4,11 +4,11 @@
   "description": "Implement a system where users can login, logout, and update basic profile information.",
   "main": "index.js",
   "scripts": {
-    "test": "tests/test.js"
+    "test": "mocha tests"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tannerwj/it410/tree/master/user-management-system"
+    "url": "https://github.com/tannerwj/it410/tree/master/user-management-web-services"
   },
   "author": "Tanner Johnson",
   "license": "ISC",
@@ -16,6 +16,7 @@
     "bcrypt": "^0.8.5",
     "bluebird": "^3.2.2",
     "body-parser": "^1.14.2",
+    "chai": "^3.5.0",
     "express": "^4.13.4",
     "mongodb": "^2.1.6"
   }
