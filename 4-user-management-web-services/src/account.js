@@ -48,6 +48,10 @@ var updateUser = function (user, pass){
 
 }
 
+var findUser = function (username){
+	return db.findUser(username)
+}
+
 var deleteUser = function (user){
 	return db.deleteUser(user)
 }
@@ -56,5 +60,6 @@ module.exports = {
 	checkLogin : checkLogin,
 	addUser : addUser,
 	updateUser : updateUser,
-	deleteUser : deleteUser
+	deleteUser : deleteUser,
+	findUser: findUser
 }
