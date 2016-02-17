@@ -9,7 +9,7 @@ const acc = require('../src/account')
 //If the client is logged in then send back the user name.
 router.get('/services/user', function (req, res) {
 	if(req.user){
-		res.send(user.username)
+		res.send(req.user.user)
 	}else{
 		res.send('user not logged in')
 	}
@@ -20,7 +20,7 @@ router.get('/services/user', function (req, res) {
 router.post('/services/user', function (req, res) {
 	var username = req.body.username
 	var password = req.body.password
-
+	
 	acc.addUser(username, password).then(function (val){
 		if(val.insertedCount === 1){
 			res.send('user created')
@@ -28,7 +28,7 @@ router.post('/services/user', function (req, res) {
 			throw new Error()
 		}
 	}).catch(function (err){
-		res.send('an error')
+		res.send('user already exists')
 	})
 })
 
@@ -45,17 +45,17 @@ router.put('/services/user', function (req, res) {
 			throw new Error()
 		}
 	}).catch(function (err){
-		if(req.user && req.user.username === username){
+		if(req.user && req.user.user === username){
 			acc.updateUser(username, password).then( function (val){
 				res.send('user updated')
-			}).catch(function (){
-				throw new Error()
+			}).catch(function (err){
+				throw new Error(err)
 			})
 		}else{
-			throw new Error()
+			res.send('user already exists')
 		}
-	}).catch(function (){
-		res.send('an err')
+	}).catch(function (err){
+		res.send('unauthorized')
 	})
 })
 

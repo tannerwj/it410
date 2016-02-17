@@ -1,7 +1,7 @@
 const http = require('http')
 const express = require('express')
-const bodyParser = require('body-parser')
 const passport = require('passport')
+const bodyParser = require('body-parser')
 const LocalStrategy = require('passport-local').Strategy
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
@@ -11,11 +11,9 @@ const acc = require('./src/account')
 var app = express()
 
 app.set('port', process.env.PORT || 4242)
-
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
-
 app.use(express.static(__dirname + 'public'))
 
 passport.use(new LocalStrategy(function (user, pass, done) {
@@ -32,7 +30,7 @@ passport.use(new LocalStrategy(function (user, pass, done) {
 
 // tell passport how to turn a user into serialized data that will be stored with the session
 passport.serializeUser(function (user, done) {
-	done(null, user.username)
+	done(null, user.user)
 })
 
 // tell passport how to go from the serialized data back to the user

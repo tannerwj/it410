@@ -4,7 +4,8 @@
   "description": "Implement a system where users can login, logout, and update basic profile information.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests"
+    "test": "mocha tests",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
